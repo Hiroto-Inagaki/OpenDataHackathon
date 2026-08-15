@@ -1,34 +1,106 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from "react";
+import { SafeAreaView, StyleSheet } from "react-native";
+import { StatusBar } from "expo-status-bar";
+
+import { useCurrentLocation } from "./src/hooks/useCurrentLocation";
+import { useHeading } from "./src/hooks/useHeading";
+import DestinationScreen from "./src/screens/DestinationScreen";
+import GuidanceScreen from "./src/screens/GuidanceScreen";
+import PermissionErrorScreen from "./src/screens/PermissionErrorScreen";
+import PermissionRationaleScreen from "./src/screens/PermissionRationaleScreen";
+import type { Destination } from "./src/types";
+
+// 画面状態は6章の画面遷移要件に対応し、散歩状態(7.2 status: 未開始/実行中/終了)は
+// destination/permission-* <-> guidance の遷移によって表現する。
+type Screen =
+  | "destination"
+  | "permission-rationale"
+  | "permission-error"
+  | "guidance";
 
 export default function App() {
+  const [screen, setScreen] = useState<Screen>("destination");
+  const [destination, setDestination] = useState<Destination | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+
+  const location = useCurrentLocation();
+  const heading = useHeading();
+
+  const handleChangeDestination = useCallback((next: Destination) => {
+    // FR-01-04: 新しい目的地を設定した場合、以前の目的地を上書きする(1件のみ保持)。
+    setDestination(next);
+  }, []);
+
+  const handleRequestStart = useCallback(() => {
+    if (!destination) return; // FR-01-05
+    setScreen("permission-rationale");
+  }, [destination]);
+
+  const handleRationaleContinue = useCallback(async () => {
+    // FR-02-01: 権限確認 -> 現在地取得 -> 状態を実行中に -> 開始日時取得 -> 案内画面へ遷移。
+    const granted = await location.requestAndStart();
+    if (!granted) {
+      setScreen("permission-error");
+      return;
+    }
+    heading.start();
+    setStartedAt(Date.now());
+    setScreen("guidance");
+  }, [location, heading]);
+
+  const handleEndWalk = useCallback(() => {
+    // FR-02-04: 散歩状態を終了に変更し、案内画面を終了する。
+    location.stop();
+    heading.stop();
+    setStartedAt(null);
+    setScreen("destination");
+  }, [location, heading]);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>寄り道さんぽ</Text>
-      <Text style={styles.description}>
-        目的地への安心を持ちながら、知らない道を歩こう。
-      </Text>
+    <SafeAreaView style={styles.root}>
+      {screen === "destination" && (
+        <DestinationScreen
+          destination={destination}
+          onChangeDestination={handleChangeDestination}
+          onStartWalk={handleRequestStart}
+        />
+      )}
+
+      {screen === "permission-rationale" && (
+        <PermissionRationaleScreen
+          onContinue={handleRationaleContinue}
+          onCancel={() => setScreen("destination")}
+        />
+      )}
+
+      {screen === "permission-error" && (
+        <PermissionErrorScreen
+          onRetry={handleRationaleContinue}
+          onBack={() => setScreen("destination")}
+        />
+      )}
+
+      {screen === "guidance" && destination && startedAt && (
+        <GuidanceScreen
+          destination={destination}
+          startedAt={startedAt}
+          position={location.position}
+          lastFixAt={location.lastFixAt}
+          isWaitingForFix={location.isWaitingForFix}
+          locationError={location.error}
+          headingDegrees={heading.headingDegrees}
+          onEndWalk={handleEndWalk}
+        />
+      )}
+
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: 'center',
+    backgroundColor: "#ffffff",
   },
 });
