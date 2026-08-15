@@ -33,3 +33,8 @@ npm run dev
 - 複数領域にまたがる変更は、Pull Requestに影響範囲を記載します。
 - 重要な技術判断とその理由は `docs/decisions/` に残します。
 
+## ドキュメント
+
+- [散歩アプリ要件定義](docs/requirements.md)
+- [API仕様](docs/api.md)
+- [設計判断](docs/decisions/README.md)
