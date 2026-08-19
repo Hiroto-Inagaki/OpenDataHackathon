@@ -12,16 +12,18 @@ import {
 import DestinationMap from "../components/DestinationMap";
 import { GeocodeSearchError, searchDestinations } from "../lib/api";
 import type { GeocodeResult } from "../lib/api";
-import type { Destination } from "../types";
+import type { CurrentPosition, Destination } from "../types";
 
 interface DestinationScreenProps {
   destination: Destination | null;
+  currentPosition: CurrentPosition | null;
   onChangeDestination: (destination: Destination) => void;
   onStartWalk: () => void;
 }
 
 export default function DestinationScreen({
   destination,
+  currentPosition,
   onChangeDestination,
   onStartWalk,
 }: DestinationScreenProps) {
@@ -127,6 +129,14 @@ export default function DestinationScreen({
           markerPosition={
             destination
               ? { latitude: destination.latitude, longitude: destination.longitude }
+              : null
+          }
+          currentPosition={
+            currentPosition
+              ? {
+                  latitude: currentPosition.latitude,
+                  longitude: currentPosition.longitude,
+                }
               : null
           }
           onMapPress={handleMapPress}

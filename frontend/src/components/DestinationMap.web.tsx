@@ -11,6 +11,7 @@ interface LatLng {
 
 interface DestinationMapProps {
   markerPosition: LatLng | null;
+  currentPosition: LatLng | null;
   onMapPress: (position: LatLng) => void;
 }
 
@@ -18,11 +19,13 @@ const MAP_HTML = buildMapHtml();
 
 export default function DestinationMap({
   markerPosition,
+  currentPosition,
   onMapPress,
 }: DestinationMapProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const isReadyRef = useRef(false);
   const pendingMarkerRef = useRef<LatLng | null>(null);
+  const pendingCurrentPositionRef = useRef<LatLng | null>(null);
 
   const postToMap = (message: Record<string, unknown>) => {
     iframeRef.current?.contentWindow?.postMessage(JSON.stringify(message), "*");
@@ -42,6 +45,12 @@ export default function DestinationMap({
         isReadyRef.current = true;
         if (pendingMarkerRef.current) {
           postToMap({ type: "setMarker", ...pendingMarkerRef.current });
+        }
+        if (pendingCurrentPositionRef.current) {
+          postToMap({
+            type: "setCurrentLocation",
+            ...pendingCurrentPositionRef.current,
+          });
         }
         return;
       }
@@ -70,6 +79,15 @@ export default function DestinationMap({
       pendingMarkerRef.current = markerPosition;
     }
   }, [markerPosition]);
+
+  useEffect(() => {
+    if (!currentPosition) return;
+    if (isReadyRef.current) {
+      postToMap({ type: "setCurrentLocation", ...currentPosition });
+    } else {
+      pendingCurrentPositionRef.current = currentPosition;
+    }
+  }, [currentPosition]);
 
   return (
     <View style={styles.container}>

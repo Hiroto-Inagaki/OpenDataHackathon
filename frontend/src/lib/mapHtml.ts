@@ -2,6 +2,8 @@
 // 同じHTMLを読み込むことで、地図実装をプラットフォーム間で共通化する。
 //
 // 親 -> 地図: {"type":"setMarker","latitude":..,"longitude":..} でマーカーを設置・中心移動。
+// 親 -> 地図: {"type":"setCurrentLocation","latitude":..,"longitude":..} で現在地マーカーを更新
+//   (目的地未選択時に限り、初回のみ地図の中心を現在地に移動)。
 // 地図 -> 親: {"type":"mapClick","latitude":..,"longitude":..} でタップ地点を通知。
 
 const DEFAULT_CENTER = { latitude: 35.681236, longitude: 139.767125 }; // 東京駅
@@ -38,6 +40,8 @@ export function buildMapHtml(): string {
     }).addTo(map);
 
     var marker = null;
+    var currentLocationMarker = null;
+    var hasCenteredOnCurrentLocation = false;
 
     function postToParent(message) {
       var payload = JSON.stringify(message);
@@ -60,6 +64,27 @@ export function buildMapHtml(): string {
       }
     }
 
+    // 現在地は目的地ピンと区別できるよう、シンプルな青い点で表示する。
+    function setCurrentLocationMarker(lat, lng) {
+      var latLng = [lat, lng];
+      if (currentLocationMarker) {
+        currentLocationMarker.setLatLng(latLng);
+      } else {
+        currentLocationMarker = L.circleMarker(latLng, {
+          radius: 8,
+          color: '#ffffff',
+          weight: 2,
+          fillColor: '#1a73e8',
+          fillOpacity: 1
+        }).addTo(map);
+      }
+      // 目的地がまだ選択されていない場合のみ、初回取得時に現在地へ地図を寄せる。
+      if (!hasCenteredOnCurrentLocation && !marker) {
+        hasCenteredOnCurrentLocation = true;
+        map.setView(latLng, 16);
+      }
+    }
+
     map.on('click', function (event) {
       var lat = event.latlng.lat;
       var lng = event.latlng.lng;
@@ -78,6 +103,9 @@ export function buildMapHtml(): string {
       }
       if (message.type === 'setMarker') {
         setMarker(message.latitude, message.longitude, true);
+      }
+      if (message.type === 'setCurrentLocation') {
+        setCurrentLocationMarker(message.latitude, message.longitude);
       }
     }
 

@@ -82,6 +82,12 @@ export function useCurrentLocation(): UseCurrentLocationResult {
   const requestAndStart = useCallback(async () => {
     setError(null);
 
+    // 複数回呼び出されても購読が重複しないようにする
+    // (例: 目的地選択画面での自動取得後に散歩開始フローからも呼ばれる場合)。
+    safeRemove(subscriptionRef.current);
+    subscriptionRef.current = null;
+    clearStaleTimer();
+
     let permission: Location.LocationPermissionResponse;
     try {
       permission = await Location.requestForegroundPermissionsAsync();

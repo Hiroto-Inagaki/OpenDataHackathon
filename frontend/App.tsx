@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
@@ -25,6 +25,13 @@ export default function App() {
 
   const location = useCurrentLocation();
   const heading = useHeading();
+
+  // 目的地選択画面で現在地を地図上に表示するため、起動時に位置情報取得を開始する。
+  // 権限が拒否された場合は location.error に反映されるのみで、画面遷移はブロックしない。
+  useEffect(() => {
+    location.requestAndStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChangeDestination = useCallback((next: Destination) => {
     // FR-01-04: 新しい目的地を設定した場合、以前の目的地を上書きする(1件のみ保持)。
@@ -61,6 +68,7 @@ export default function App() {
       {screen === "destination" && (
         <DestinationScreen
           destination={destination}
+          currentPosition={location.position}
           onChangeDestination={handleChangeDestination}
           onStartWalk={handleRequestStart}
         />
