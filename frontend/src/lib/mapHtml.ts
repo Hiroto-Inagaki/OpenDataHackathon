@@ -15,16 +15,26 @@ export function buildMapHtml(): string {
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map { height: 100%; margin: 0; padding: 0; }
+    /* 地図をシンプルに保つため、帰属表示を小さく控えめにする。 */
+    .leaflet-control-attribution {
+      font-size: 9px;
+      background: rgba(255, 255, 255, 0.7);
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([${DEFAULT_CENTER.latitude}, ${DEFAULT_CENTER.longitude}], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var map = L.map('map', { zoomControl: false }).setView(
+      [${DEFAULT_CENTER.latitude}, ${DEFAULT_CENTER.longitude}],
+      14
+    );
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    // 道路名・POIラベルが少なく見やすいシンプルな地図(CARTO Positron)を使用する。
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(map);
 
     var marker = null;

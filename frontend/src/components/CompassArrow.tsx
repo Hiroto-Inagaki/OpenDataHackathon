@@ -1,6 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { bearingToCompassDirection } from "../lib/geo";
+import {
+  bearingToCompassDirection,
+  compassDirectionToJapanese,
+} from "../lib/geo";
 
 interface CompassArrowProps {
   /** 現在地から目的地への方位角（真北基準、0-360°） */
@@ -20,7 +23,9 @@ export default function CompassArrow({
     ? bearingDegrees - (headingDegrees as number)
     : bearingDegrees;
 
-  const direction = bearingToCompassDirection(bearingDegrees);
+  const direction = compassDirectionToJapanese(
+    bearingToCompassDirection(bearingDegrees),
+  );
 
   return (
     <View style={styles.container}>

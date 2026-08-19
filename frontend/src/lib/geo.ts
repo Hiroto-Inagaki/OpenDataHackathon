@@ -77,6 +77,26 @@ export function bearingToCompassDirection(
   return COMPASS_DIRECTIONS[index];
 }
 
+const COMPASS_DIRECTION_LABELS_JA: Record<CompassDirection, string> = {
+  N: "北",
+  NE: "北東",
+  E: "東",
+  SE: "南東",
+  S: "南",
+  SW: "南西",
+  W: "西",
+  NW: "北西",
+};
+
+/**
+ * 8方位を日本語表記（例: 「北」「南東」）に変換する。
+ */
+export function compassDirectionToJapanese(
+  direction: CompassDirection,
+): string {
+  return COMPASS_DIRECTION_LABELS_JA[direction];
+}
+
 /**
  * FR-03-02: 表示単位。1km未満はm、以上はkmを小数点第1位まで表示する。
  */
