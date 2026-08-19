@@ -4,6 +4,7 @@
 // 親 -> 地図: {"type":"setMarker","latitude":..,"longitude":..} でマーカーを設置・中心移動。
 // 親 -> 地図: {"type":"setCurrentLocation","latitude":..,"longitude":..} で現在地マーカーを更新
 //   (目的地未選択時に限り、初回のみ地図の中心を現在地に移動)。
+// 親 -> 地図: {"type":"recenterToCurrentLocation"} で地図の中心を現在地マーカーの位置に移動。
 // 地図 -> 親: {"type":"mapClick","latitude":..,"longitude":..} でタップ地点を通知。
 
 const DEFAULT_CENTER = { latitude: 35.681236, longitude: 139.767125 }; // 東京駅
@@ -106,6 +107,11 @@ export function buildMapHtml(): string {
       }
       if (message.type === 'setCurrentLocation') {
         setCurrentLocationMarker(message.latitude, message.longitude);
+      }
+      if (message.type === 'recenterToCurrentLocation') {
+        if (currentLocationMarker) {
+          map.setView(currentLocationMarker.getLatLng(), 16);
+        }
       }
     }
 

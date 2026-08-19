@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { buildMapHtml } from "../lib/mapHtml";
 
@@ -29,6 +29,10 @@ export default function DestinationMap({
 
   const postToMap = (message: Record<string, unknown>) => {
     iframeRef.current?.contentWindow?.postMessage(JSON.stringify(message), "*");
+  };
+
+  const handleLocateMePress = () => {
+    postToMap({ type: "recenterToCurrentLocation" });
   };
 
   useEffect(() => {
@@ -97,6 +101,20 @@ export default function DestinationMap({
         style={iframeStyle}
         title="destination-map"
       />
+      <Pressable
+        style={({ pressed }) => [
+          styles.locateButton,
+          !currentPosition && styles.locateButtonDisabled,
+          pressed && styles.locateButtonPressed,
+        ]}
+        onPress={handleLocateMePress}
+        disabled={!currentPosition}
+        accessibilityLabel="現在地に移動"
+      >
+        <View style={styles.locateButtonRing}>
+          <View style={styles.locateButtonDot} />
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -111,5 +129,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: "hidden",
+  },
+  locateButton: {
+    position: "absolute",
+    left: 12,
+    bottom: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  locateButtonPressed: {
+    backgroundColor: "#f0f0f0",
+  },
+  locateButtonDisabled: {
+    opacity: 0.5,
+  },
+  locateButtonRing: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#1a73e8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  locateButtonDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#1a73e8",
   },
 });
