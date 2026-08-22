@@ -17,7 +17,8 @@ export const LOCATION_UPDATE_DISTANCE_METERS = 5;
 // 合意後に見直す(14章 OQ-LD-02)。ここ一か所にのみ数値を持ち、UIへ直書きしない。
 export const LANDMARK_DISCOVERY_CONFIG: LandmarkDiscoveryConfig = {
   // 気配「？」マーカーを表示し始める、現在地からの距離(FR-LD-03)。
-  hintDetectionRadiusMeters: 400,
+  // TODO: 動作確認のため一時的に50kmに拡大中。検証が終わったら400m程度に戻すこと。
+  hintDetectionRadiusMeters: 50000,
   // 「？」ボタンを有効化する接近半径(FR-LD-06)。
   discoveryRadiusMeters: 30,
   // 接近判定・霧の踏破更新で受け入れる位置精度の上限(FR-LD-02, FR-LD-06)。
