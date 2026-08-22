@@ -23,7 +23,7 @@ export function buildExplorationMapHtml(exploredRadiusMeters: number): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body, #map { height: 100%; margin: 0; padding: 0; background: #0b1220; }
+    html, body, #map { height: 100%; margin: 0; padding: 0; background: #cbd5e1; }
     .leaflet-control-attribution {
       font-size: 9px;
       background: rgba(255, 255, 255, 0.7);
@@ -95,6 +95,42 @@ export function buildExplorationMapHtml(exploredRadiusMeters: number): string {
       return centerPoint.distanceTo(edgePoint);
     }
 
+    // 雲のような質感を出すため、もこもこした塊(パフ)を並べたタイルパターンを1度だけ生成する。
+    // 位置は決定論的な擬似乱数(シード固定)で作るため、再描画のたびに柄が変わってちらつくことがない。
+    var CLOUD_TILE_SIZE = 260;
+    function createCloudPuffPattern() {
+      var seed = 42;
+      function rand() {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      }
+      var puffs = [];
+      var count = 16;
+      for (var i = 0; i < count; i++) {
+        puffs.push({
+          x: rand() * CLOUD_TILE_SIZE,
+          y: rand() * CLOUD_TILE_SIZE,
+          r: 45 + rand() * 75,
+          shade: rand()
+        });
+      }
+      return puffs;
+    }
+    var CLOUD_PUFFS = createCloudPuffPattern();
+
+    function drawCloudPuff(cx, cy, r, shade) {
+      // shadeが大きいほど白く明るいパフ、小さいほど陰の入ったグレーのパフにする。
+      var rgb = shade > 0.5 ? '255,255,255' : '148,163,184';
+      var alpha = 0.14 + shade * 0.16;
+      var gradient = fogCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gradient.addColorStop(0, 'rgba(' + rgb + ',' + alpha + ')');
+      gradient.addColorStop(1, 'rgba(' + rgb + ',0)');
+      fogCtx.fillStyle = gradient;
+      fogCtx.beginPath();
+      fogCtx.arc(cx, cy, r, 0, Math.PI * 2);
+      fogCtx.fill();
+    }
+
     function redrawFog() {
       var size = map.getSize();
       var topLeft = map.containerPointToLayerPoint([0, 0]);
@@ -104,15 +140,42 @@ export function buildExplorationMapHtml(exploredRadiusMeters: number): string {
       L.DomUtil.setPosition(fogCanvas, topLeft);
 
       fogCtx.clearRect(0, 0, size.x, size.y);
-      fogCtx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+
+      // 1. 雲の下地(白〜薄いグレーのやわらかいグラデーション)。
+      var baseGradient = fogCtx.createLinearGradient(0, 0, size.x, size.y);
+      baseGradient.addColorStop(0, 'rgba(248, 250, 252, 0.92)');
+      baseGradient.addColorStop(1, 'rgba(203, 213, 225, 0.92)');
+      fogCtx.fillStyle = baseGradient;
       fogCtx.fillRect(0, 0, size.x, size.y);
 
+      // 2. もこもこした雲のパフを、地図の座標に紐づく位相でタイル状に敷き詰める
+      //    (パンしても模様が地図に対して固定されて見えるようにする)。
+      var phaseX = ((topLeft.x % CLOUD_TILE_SIZE) + CLOUD_TILE_SIZE) % CLOUD_TILE_SIZE;
+      var phaseY = ((topLeft.y % CLOUD_TILE_SIZE) + CLOUD_TILE_SIZE) % CLOUD_TILE_SIZE;
+      for (var tx = -phaseX - CLOUD_TILE_SIZE; tx < size.x + CLOUD_TILE_SIZE; tx += CLOUD_TILE_SIZE) {
+        for (var ty = -phaseY - CLOUD_TILE_SIZE; ty < size.y + CLOUD_TILE_SIZE; ty += CLOUD_TILE_SIZE) {
+          for (var p = 0; p < CLOUD_PUFFS.length; p++) {
+            var puff = CLOUD_PUFFS[p];
+            drawCloudPuff(tx + puff.x, ty + puff.y, puff.r, puff.shade);
+          }
+        }
+      }
+
+      // 3. 踏破済みの地点は、雲が晴れるようにやわらかい縁で切り抜く(輪郭を出さない)。
       fogCtx.globalCompositeOperation = 'destination-out';
       exploredPoints.forEach(function (point) {
         var latlng = L.latLng(point.latitude, point.longitude);
         var layerPoint = map.latLngToLayerPoint(latlng);
         var canvasPoint = layerPoint.subtract(topLeft);
         var radius = metersToPixelRadius(latlng, EXPLORED_RADIUS_METERS);
+        var clearGradient = fogCtx.createRadialGradient(
+          canvasPoint.x, canvasPoint.y, 0,
+          canvasPoint.x, canvasPoint.y, radius
+        );
+        clearGradient.addColorStop(0, 'rgba(0,0,0,1)');
+        clearGradient.addColorStop(0.6, 'rgba(0,0,0,1)');
+        clearGradient.addColorStop(1, 'rgba(0,0,0,0)');
+        fogCtx.fillStyle = clearGradient;
         fogCtx.beginPath();
         fogCtx.arc(canvasPoint.x, canvasPoint.y, radius, 0, Math.PI * 2);
         fogCtx.fill();

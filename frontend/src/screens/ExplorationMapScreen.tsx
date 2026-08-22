@@ -81,7 +81,7 @@ export default function ExplorationMapScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1220",
+    backgroundColor: "#cbd5e1",
   },
   header: {
     flexDirection: "row",
