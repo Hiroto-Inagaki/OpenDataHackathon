@@ -112,11 +112,19 @@ export function useDetour({
   );
 
   const hints = useMemo(() => {
-    const excludeSpotIds = new Set(discoveredSpotIds);
+    // 発見済みのスポットも一覧には残し、discoveredフラグで✅表示にする(？のまま消さない)。
+    // 進行中の寄り道対象だけは、寄り道コンパス側で案内するため一覧から外す。
+    const excludeSpotIds = new Set<string>();
     if (detourState.status === "active") {
       excludeSpotIds.add(detourState.spotId);
     }
-    return selectLandmarkHints(spots, position, config, excludeSpotIds);
+    return selectLandmarkHints(
+      spots,
+      position,
+      config,
+      excludeSpotIds,
+      discoveredSpotIds,
+    );
   }, [spots, position, config, discoveredSpotIds, detourState]);
 
   const startDetour = useCallback((spotId: string) => {

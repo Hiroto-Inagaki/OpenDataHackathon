@@ -42,6 +42,10 @@ export function buildExplorationMapHtml(exploredRadiusMeters: number): string {
       justify-content: center;
       box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     }
+    .hint-marker-discovered {
+      background: #16a34a;
+      color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -188,24 +192,35 @@ export function buildExplorationMapHtml(exploredRadiusMeters: number): string {
       redrawFog();
     }
 
-    var hintDivIcon = L.divIcon({
-      className: '',
-      html: '<div class="hint-marker">？</div>',
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-    });
+    // 発見済みは白いチェックマーク、未発見は？で描き分ける(FR-LD-07: 発見しても地図から消さない)。
+    function buildHintIcon(discovered) {
+      var className = discovered ? 'hint-marker hint-marker-discovered' : 'hint-marker';
+      // 絵文字の色付きチェック(✅)ではなく、CSSのcolorに従う単色の記号(✔)を使う。
+      // バリエーションセレクタ(U+FE0F)を付けると絵文字表示(色固定)になりCSSのcolorが無視されるため、
+      // 単体のU+2714(テキスト表示)のままにすること。
+      var symbol = discovered ? '✔' : '？';
+      return L.divIcon({
+        className: '',
+        html: '<div class="' + className + '">' + symbol + '</div>',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      });
+    }
 
     function setHints(hints) {
       var nextIds = {};
       (Array.isArray(hints) ? hints : []).forEach(function (hint) {
         nextIds[hint.spotId] = true;
         var latLng = [hint.latitude, hint.longitude];
+        var icon = buildHintIcon(!!hint.discovered);
+        var altText = hint.discovered ? '発見済みの寄り道スポット' : '寄り道スポットの気配';
         if (hintMarkers[hint.spotId]) {
           hintMarkers[hint.spotId].setLatLng(latLng);
+          hintMarkers[hint.spotId].setIcon(icon);
         } else {
           var marker = L.marker(latLng, {
-            icon: hintDivIcon,
-            alt: '寄り道スポットの気配',
+            icon: icon,
+            alt: altText,
             keyboard: true,
           }).addTo(map);
           marker.on('click', function () {

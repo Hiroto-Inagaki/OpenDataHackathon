@@ -142,7 +142,13 @@ export default function WalkScreen({
         visible={infoModalSpot !== null}
         content={infoModalSpot?.discoveryContent ?? null}
         source={infoModalSpot?.source ?? null}
-        onClose={() => setInfoModalSpot(null)}
+        onClose={() => {
+          // OQ-LD-07(発見後に自動で目的地コンパスへ戻るか)の暫定方針:
+          // 発見情報を確認して閉じた時点で寄り道を自動終了する。
+          // ただし、確認前に離脱したくなった場合のため「寄り道を終了」ボタンは引き続き提供する(FR-LD-08)。
+          setInfoModalSpot(null);
+          handleEndDetour();
+        }}
       />
     </View>
   );

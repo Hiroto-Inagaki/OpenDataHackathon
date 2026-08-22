@@ -98,6 +98,8 @@ export interface LandmarkHint {
     longitude: number;
   };
   categoryHint?: string;
+  /** 発見済みかどうか。マップ表示の記号を切り替える用途で、発見前後の情報境界には影響しない。 */
+  discovered: boolean;
 }
 
 /** 9.3: 発見記録。「？」ボタンの利用者操作によってのみ作成する(8.2)。 */

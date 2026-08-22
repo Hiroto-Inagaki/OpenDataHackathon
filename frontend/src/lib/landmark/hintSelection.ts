@@ -35,6 +35,8 @@ export const distanceBasedHintRule: HintSelectionRule = (
 /**
  * 発見前の気配表示データを生成する。discoveryContentを含めないことで、
  * FR-LD-03「発見前の表示から、少なくとも名称と説明文を取得できないようにする」を満たす。
+ * 発見済みのスポットも一覧には残すが、discoveredフラグのみを立てて区別する
+ * (マップ側は？と✅で描き分ける。名称・説明文はこの型に含まれないため境界は保たれる)。
  *
  * OQ-LD-09(発見前にカテゴリを見せるか)は未決事項のため、categoryHintは暫定的に付与するが、
  * 呼び出し側(UI)が使うかどうかを選べるよう任意項目のままにしている。
@@ -44,6 +46,7 @@ export function selectLandmarkHints(
   position: CurrentPosition | null,
   config: LandmarkDiscoveryConfig,
   excludeSpotIds: ReadonlySet<string> = new Set(),
+  discoveredSpotIds: ReadonlySet<string> = new Set(),
   rule: HintSelectionRule = distanceBasedHintRule,
 ): LandmarkHint[] {
   if (!position) return [];
@@ -57,5 +60,6 @@ export function selectLandmarkHints(
     // 座標を得る構造にすることで、後から座標をぼかす方式に変更しても呼び出し側は無変更で済む。
     displayLocation: { ...spot.actualLocation },
     categoryHint: spot.category,
+    discovered: discoveredSpotIds.has(spot.id),
   }));
 }

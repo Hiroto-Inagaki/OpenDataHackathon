@@ -52,6 +52,7 @@ export default function ExplorationMap({
         spotId: hint.spotId,
         latitude: hint.displayLocation?.latitude,
         longitude: hint.displayLocation?.longitude,
+        discovered: hint.discovered,
       })),
     });
   }, [hints]);
