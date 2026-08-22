@@ -33,7 +33,6 @@ export function buildMapHtml(): string {
       [${DEFAULT_CENTER.latitude}, ${DEFAULT_CENTER.longitude}],
       14
     );
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
     // 道路名・POIラベルが少なく見やすいシンプルな地図(CARTO Positron)を使用する。
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
