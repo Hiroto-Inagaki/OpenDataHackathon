@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { buildMapHtml } from "../lib/mapHtml";
 
@@ -114,6 +114,7 @@ export default function DestinationMap({
         <View style={styles.locateButtonRing}>
           <View style={styles.locateButtonDot} />
         </View>
+        <Text style={styles.locateLabel}>現在地</Text>
       </Pressable>
     </View>
   );
@@ -134,12 +135,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 12,
     bottom: 12,
-    width: 44,
+    flexDirection: "row",
+    alignItems: "center",
     height: 44,
     borderRadius: 22,
+    paddingHorizontal: 16,
     backgroundColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.25,
@@ -151,6 +152,12 @@ const styles = StyleSheet.create({
   },
   locateButtonDisabled: {
     opacity: 0.5,
+  },
+  locateLabel: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1a1a1a",
   },
   locateButtonRing: {
     width: 20,
