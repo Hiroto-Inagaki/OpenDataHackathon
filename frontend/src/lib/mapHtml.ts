@@ -33,10 +33,15 @@ export function buildMapHtml(): string {
       [${DEFAULT_CENTER.latitude}, ${DEFAULT_CENTER.longitude}],
       14
     );
-    // 道路名・POIラベルが少なく見やすいシンプルな地図(CARTO Positron)を使用する。
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // 衛星写真ベースのリアルな地図表示(Esri World Imagery)。
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+    }).addTo(map);
+    // 衛星写真だけでは道路名・地名が読めないため、ラベルのみの参照レイヤーを重ねる。
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      pane: 'overlayPane'
     }).addTo(map);
 
     var marker = null;
