@@ -5,9 +5,9 @@ import { StatusBar } from "expo-status-bar";
 import { useCurrentLocation } from "./src/hooks/useCurrentLocation";
 import { useHeading } from "./src/hooks/useHeading";
 import DestinationScreen from "./src/screens/DestinationScreen";
-import GuidanceScreen from "./src/screens/GuidanceScreen";
 import PermissionErrorScreen from "./src/screens/PermissionErrorScreen";
 import PermissionRationaleScreen from "./src/screens/PermissionRationaleScreen";
+import WalkScreen from "./src/screens/WalkScreen";
 import type { Destination } from "./src/types";
 
 // 画面状態は6章の画面遷移要件に対応し、散歩状態(7.2 status: 未開始/実行中/終了)は
@@ -22,6 +22,8 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("destination");
   const [destination, setDestination] = useState<Destination | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  // 寄り道の発見記録(9.3)に紐づける散歩セッションID。散歩の開始・終了と寿命を合わせる。
+  const [walkSessionId, setWalkSessionId] = useState<string | null>(null);
 
   const location = useCurrentLocation();
   const heading = useHeading();
@@ -52,6 +54,7 @@ export default function App() {
     }
     heading.start();
     setStartedAt(Date.now());
+    setWalkSessionId(`walk-${Date.now()}`);
     setScreen("guidance");
   }, [location, heading]);
 
@@ -60,6 +63,7 @@ export default function App() {
     location.stop();
     heading.stop();
     setStartedAt(null);
+    setWalkSessionId(null);
     setScreen("destination");
   }, [location, heading]);
 
@@ -88,10 +92,11 @@ export default function App() {
         />
       )}
 
-      {screen === "guidance" && destination && startedAt && (
-        <GuidanceScreen
+      {screen === "guidance" && destination && startedAt && walkSessionId && (
+        <WalkScreen
           destination={destination}
           startedAt={startedAt}
+          walkSessionId={walkSessionId}
           position={location.position}
           lastFixAt={location.lastFixAt}
           isWaitingForFix={location.isWaitingForFix}
